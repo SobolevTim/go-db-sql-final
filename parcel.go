@@ -64,6 +64,10 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 		}
 		res = append(res, p)
 	}
+	err = row.Err()
+	if err != nil {
+		return nil, err
+	}
 
 	return res, nil
 }
@@ -80,48 +84,27 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 }
 
 func (s ParcelStore) SetAddress(number int, address string) error {
-	// получение статуса из таблицы
-	row := s.db.QueryRow("SELECT status FROM parcel WHERE number = :number",
-		sql.Named("number", number))
-
-	// заполнение объекта Parcel данными из таблицы
-	p := Parcel{}
-	err := row.Scan(&p.Status)
-	if err != nil {
-		return err
-	}
 	// обновление адреса в таблице parcel
 	// менять адрес можно только если значение статуса registered
-	if p.Status == ParcelStatusRegistered {
-		_, err := s.db.Exec("UPDATE parcel SET address = :address WHERE number = :number",
-			sql.Named("address", address),
-			sql.Named("number", number))
-		if err != nil {
-			return err
-		}
+	_, err := s.db.Exec("UPDATE parcel SET address = :address WHERE number = :number AND status = :status",
+		sql.Named("address", address),
+		sql.Named("number", number),
+		sql.Named("status", ParcelStatusRegistered))
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (s ParcelStore) Delete(number int) error {
-	// получение статуса из таблицы
-	row := s.db.QueryRow("SELECT status FROM parcel WHERE number = :number",
-		sql.Named("number", number))
-	// заполнение объекта Parcel данными из таблицы
-	p := Parcel{}
-	err := row.Scan(&p.Status)
-	if err != nil {
-		return err
-	}
 	// удаление строки из таблицы parcel
 	// удалять строку можно только если значение статуса registered
-	if p.Status == ParcelStatusRegistered {
-		_, err := s.db.Exec("DELETE FROM parcel WHERE number = :number",
-			sql.Named("number", number))
-		if err != nil {
-			return err
-		}
+	_, err := s.db.Exec("DELETE FROM parcel WHERE number = :number AND status = :status",
+		sql.Named("number", number),
+		sql.Named("status", ParcelStatusRegistered))
+	if err != nil {
+		return err
 	}
 
 	return nil

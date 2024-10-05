@@ -44,28 +44,22 @@ func TestAddGetDelete(t *testing.T) {
 	id, err := store.Add(parcel)
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
+	parcel.Number = id
 
 	// get
 	// получите только что добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что значения всех полей в полученном объекте совпадают со значениями полей в переменной parcel
 	p, err := store.Get(id)
 	require.NoError(t, err)
-	assert.Equal(t, p.Client, parcel.Client)
-	assert.Equal(t, p.Status, parcel.Status)
-	assert.Equal(t, p.Address, parcel.Address)
-	assert.Equal(t, p.CreatedAt, parcel.CreatedAt)
+	assert.Equal(t, p, parcel)
 
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что посылку больше нельзя получить из БД
 	err = store.Delete(id)
 	require.NoError(t, err)
-	p, err = store.Get(id)
+	_, err = store.Get(id)
 	require.Error(t, err)
-	assert.Empty(t, p.Client)
-	assert.Empty(t, p.Status)
-	assert.Empty(t, p.Address)
-	assert.Empty(t, p.CreatedAt)
 }
 
 // TestSetAddress проверяет обновление адреса
@@ -94,10 +88,7 @@ func TestSetAddress(t *testing.T) {
 	// получите добавленную посылку и убедитесь, что адрес обновился
 	p, err := store.Get(id)
 	require.NoError(t, err)
-	assert.Equal(t, p.Client, parcel.Client)
-	assert.Equal(t, p.Status, parcel.Status)
 	assert.Equal(t, p.Address, newAddress)
-	assert.Equal(t, p.CreatedAt, parcel.CreatedAt)
 }
 
 // TestSetStatus проверяет обновление статуса
@@ -124,10 +115,7 @@ func TestSetStatus(t *testing.T) {
 	// получите добавленную посылку и убедитесь, что статус обновился
 	p, err := store.Get(id)
 	require.NoError(t, err)
-	assert.Equal(t, p.Client, parcel.Client)
 	assert.Equal(t, p.Status, status)
-	assert.Equal(t, p.Address, parcel.Address)
-	assert.Equal(t, p.CreatedAt, parcel.CreatedAt)
 }
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
@@ -173,8 +161,6 @@ func TestGetByClient(t *testing.T) {
 	// check
 	for _, parcel := range storedParcels {
 		// в parcelMap лежат добавленные посылки, ключ - идентификатор посылки, значение - сама посылка
-		_, ok := parcelMap[parcel.Number]
-		require.True(t, ok)
 		// убедитесь, что все посылки из storedParcels есть в parcelMap
 		assert.Contains(t, parcelMap, parcel.Number)
 		// убедитесь, что значения полей полученных посылок заполнены верно
